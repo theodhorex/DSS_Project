@@ -255,59 +255,55 @@ select:focus-visible {
 .tree-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 28px;
+  gap: 28px 36px;
 }
 
 .tree-grid .tree-column {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  background: linear-gradient(180deg, rgba(250,250,252,0.8), rgba(247,246,243,0.6));
-  border: 1px solid rgba(15,23,42,0.06);
-  padding: 14px;
-  border-radius: 12px;
+  gap: 14px;
+  padding: 0 4px 4px;
 }
 
 .tree-grid .tree-column-title {
-  font-weight: 800;
+  font-weight: 900;
   font-size: 15px;
   color: #0f172a;
-  padding-bottom: 10px;
-  border-bottom: 2px solid rgba(15,23,42,0.08);
-  margin-bottom: 8px;
+  padding-bottom: 12px;
+  border-bottom: 3px solid #0f172a;
+  margin-bottom: 16px;
 }
 
 .tree-grid .tree-item {
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  padding: 10px 12px;
-  font-size: 13px;
-  color: #334155;
+  padding: 0;
+  font-size: 14px;
+  color: #64748b;
   cursor: pointer;
-  border-radius: 8px;
-  transition: all 0.18s ease;
-  background: #ffffff;
-  border: 1px solid rgba(15,23,42,0.06);
-  box-shadow: 0 2px 0 rgba(15,23,42,0.04);
+  border-radius: 0;
+  transition: color 0.18s ease;
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
 
 .tree-grid .tree-item:hover {
-  background-color: #f8fafc;
   color: #0f172a;
-  transform: translateY(-3px);
 }
 
 .tree-grid .tree-item::before {
-  content: "▶ ";
-  font-size: 11px;
-  color: #94a3b8;
+  content: "☑";
+  font-size: 14px;
+  color: #60a5fa;
   flex-shrink: 0;
-  margin-top: 1px;
+  margin-top: 2px;
+  margin-right: 2px;
 }
 
 .tree-grid .tree-item[data-expanded="true"]::before {
-  content: "▼ ";
+  content: "☑";
 }
 
 .tree-grid .tree-children {
@@ -337,6 +333,12 @@ select:focus-visible {
   font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, "Roboto Mono", "Courier New", monospace;
   font-size: 13px;
   color: inherit;
+}
+
+.tree-item-content {
+  white-space: normal;
+  line-height: 1.5;
+  word-break: break-word;
 }
 
 .tree-column .tree-item .meta {

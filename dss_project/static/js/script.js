@@ -657,6 +657,24 @@ function renderTreeGraph(target, dot) {
     return { nodes, edges };
   }
 
+  async function renderWithViz(dotString) {
+    if (typeof Viz !== "function") {
+      return false;
+    }
+
+    try {
+      const viz = new Viz();
+      const svg = await viz.renderSVGElement(dotString);
+      container.innerHTML = "";
+      container.appendChild(svg);
+      setTreeStatus(target, "Siap");
+      return true;
+    } catch (error) {
+      console.warn("Viz render failed, falling back to parsed tree:", error);
+      return false;
+    }
+  }
+
   function organizeTreeColumns(nodes, edges) {
     if (Object.keys(nodes).length === 0) {
       return { "Tree": Object.values(nodes).map(n => n.label) };
@@ -717,7 +735,7 @@ function renderTreeGraph(target, dot) {
           .replace(/&/g, "&amp;")
           .replace(/</g, "&lt;")
           .replace(/>/g, "&gt;");
-        const withBreaks = escaped.replace(/\\\\n/g, "<br>").replace(/\n/g, "<br>");
+        const withBreaks = escaped.replace(/\\n/g, "<br>").replace(/\n/g, "<br>");
         html += `<div class="tree-item"><div class="tree-item-content">${withBreaks}</div></div>`;
       });
 
@@ -727,6 +745,7 @@ function renderTreeGraph(target, dot) {
     return html;
   }
 
+  // Skip Viz.js and use column layout directly
   try {
     const { nodes, edges } = parseDOT(dot);
     const columns = organizeTreeColumns(nodes, edges);
