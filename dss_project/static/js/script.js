@@ -745,20 +745,25 @@ function renderTreeGraph(target, dot) {
     return html;
   }
 
-  // Skip Viz.js and use column layout directly
-  try {
-    const { nodes, edges } = parseDOT(dot);
-    const columns = organizeTreeColumns(nodes, edges);
-    const html = renderTreeGrid(columns);
+  renderWithViz(dot)
+    .then((vizRendered) => {
+      if (vizRendered) {
+        return;
+      }
 
-    container.classList.add("tree-grid");
-    container.innerHTML = html;
-    setTreeStatus(target, "Siap");
-  } catch (error) {
-    console.error("Tree render error:", error);
-    container.innerHTML = '<div class="text-slate-500">Gagal merender tree</div>';
-    setTreeStatus(target, "Gagal");
-  }
+      const { nodes, edges } = parseDOT(dot);
+      const columns = organizeTreeColumns(nodes, edges);
+      const html = renderTreeGrid(columns);
+
+      container.innerHTML = html;
+      container.classList.add("tree-grid");
+      setTreeStatus(target, "Siap");
+    })
+    .catch((error) => {
+      console.error("Tree render error:", error);
+      container.innerHTML = '<div class="text-slate-500">Gagal merender tree</div>';
+      setTreeStatus(target, "Gagal");
+    });
 }
 
 async function loadTrees() {

@@ -7,7 +7,9 @@
       "Bash(netstat -ano)",
       "Bash(findstr :5000)",
       "Bash(powershell -Command \"Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait\\('%{TAB}'\\); Start-Sleep -Milliseconds 500\")",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\AYU K.A\\\\Documents\\\\tugas_ayu\\\\dss_project\" -Recurse -Include \"*.tsx\", \"*.ts\", \"*.jsx\", \"*.js\")",
+      "Bash(Select-Object -First 20 FullName)"
     ]
   }
 }
