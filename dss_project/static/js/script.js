@@ -29,7 +29,7 @@ const TARGETS = [
   "stress_level",
   "anxiety_level",
   "final_state",
-  "recommended_intervention",
+  "intervention_response",
 ];
 
 const PATH_EMPTY_TEXT = "Klik prediksi untuk melihat jalur keputusan.";
@@ -408,14 +408,8 @@ function displayResults(data) {
   const confidenceBar = document.getElementById("confidenceBar");
   const explanationText = document.getElementById("explanationText");
 
-  const stressLabel = computeLevelLabel(
-    predictions.stress_level,
-    lastPayload?.stress_score
-  );
-  const anxietyLabel = computeLevelLabel(
-    predictions.anxiety_level,
-    lastPayload?.anxiety_score
-  );
+  const stressLabel = computeLevelLabel(predictions.stress_level);
+  const anxietyLabel = computeLevelLabel(predictions.anxiety_level);
 
   stressBadge.textContent = `Stres: ${stressLabel}`;
   anxietyBadge.textContent = `Kecemasan: ${anxietyLabel}`;
@@ -425,17 +419,9 @@ function displayResults(data) {
 
   finalState.textContent = predictions.final_state || "-";
 
-  // If model didn't return a single-line recommended_intervention, fallback to actionable summary
-  let recommText = predictions.recommended_intervention;
+  let recommText = predictions.intervention_response;
   if (!recommText || String(recommText).trim() === "") {
-    const normalized = String(stressLabel || "").toLowerCase();
-    const items = ACTION_RECOMMENDATIONS[normalized];
-    if (items && items.length) {
-      // use first recommendation as concise summary
-      recommText = items[0];
-    } else {
-      recommText = "-";
-    }
+    recommText = "-";
   }
   recommendation.textContent = recommText;
 
@@ -446,32 +432,63 @@ function displayResults(data) {
   explanationText.textContent = data.explanation || "-";
 
   renderDecisionPaths(data.decision_paths || {});
-  renderKeyFactors(data.decision_paths || {});
-  renderRecommendations(stressLabel);
+  renderKeyFactorsModal(data.decision_paths || {});
+  renderPreprocessingStepsModal(data.preprocessing_steps || []);
+  renderPredictionProbabilitiesModal(data.prediction_probabilities || {});
+  renderRecommendationsModal(stressLabel);
 
-  // hide quick guide when results are shown
   if (quickGuide) quickGuide.hidden = true;
   results.hidden = false;
-  // focus the intervention tree tab so user sees related decision tree
   try {
-    setActiveTree('recommended_intervention');
+    setActiveTree('intervention_response');
   } catch (e) {}
-  // reload tree visuals in case they need re-rendering
   try { loadTrees(); } catch (e) {}
+  try {
+    openDetailsModalWithAllInfo();
+  } catch (e) {}
 }
 
-function computeLevelLabel(level, score) {
+function computeLevelLabel(level) {
   const normalized = String(level || "").toLowerCase();
-  if (normalized === "high" && typeof score === "number" && score >= 85) {
-    return "Critical";
-  }
   if (normalized === "medium") {
     return "Medium";
   }
   if (normalized === "high") {
     return "High";
   }
-  return "Low";
+  if (normalized === "low") {
+    return "Low";
+  }
+  return level || "-";
+}
+
+function openDetailsModalWithAllInfo() {
+  const modal = document.getElementById("detailsModal");
+  if (!modal) {
+    return;
+  }
+
+  modal.classList.remove("hidden");
+  document.body.style.overflow = "hidden";
+
+  const infoIds = [
+    "decisionTreeInfo",
+    "keyFactorsInfo",
+    "preprocessingInfo",
+    "probabilitiesInfo",
+    "recommendationInfo",
+  ];
+
+  infoIds.forEach((id) => {
+    const info = modal.querySelector(`#${id}`);
+    if (info) {
+      info.classList.remove("hidden");
+    }
+    const button = modal.querySelector(`[data-toggle-info="${id}"]`);
+    if (button) {
+      button.textContent = "Sembunyikan";
+    }
+  });
 }
 
 function applyLevelStyles(element, level) {
@@ -545,6 +562,179 @@ function renderKeyFactors(paths) {
 
 function renderRecommendations(level) {
   const list = document.getElementById("recommendationList");
+  if (!list) {
+    return;
+  }
+
+  list.innerHTML = "";
+  const normalized = String(level || "").toLowerCase();
+  const items = ACTION_RECOMMENDATIONS[normalized];
+
+  if (!items) {
+    const item = document.createElement("li");
+    item.textContent = RECOMMENDATION_EMPTY;
+    item.className = "text-sm text-slate-500";
+      list.appendChild(item);
+      try { applyRevealToElement(item); } catch (e) {}
+    return;
+  }
+
+  items.forEach((text) => {
+    const item = document.createElement("li");
+    item.textContent = text;
+    item.className =
+      "rounded-xl border-2 border-ink bg-amber-100 px-3 py-2 text-sm text-slate-900";
+      list.appendChild(item);
+      try { applyRevealToElement(item); } catch (e) {}
+  });
+}
+
+function renderKeyFactorsModal(paths) {
+  const list = document.getElementById("keyFactorsModal");
+  if (!list) {
+    return;
+  }
+
+  list.innerHTML = "";
+  const steps = paths.stress_level || paths.final_state || [];
+  const factors = steps.slice(0, 4);
+
+  if (!factors.length) {
+    const item = document.createElement("li");
+    item.textContent = KEY_FACTOR_EMPTY;
+    item.className = "text-sm text-slate-500";
+      list.appendChild(item);
+      try { applyRevealToElement(item); } catch (e) {}
+    return;
+  }
+
+  factors.forEach((step) => {
+    const item = document.createElement("li");
+    item.textContent = step;
+    item.className =
+      "rounded-xl border-2 border-ink bg-white px-3 py-2 text-sm text-slate-700";
+      list.appendChild(item);
+      try { applyRevealToElement(item); } catch (e) {}
+  });
+}
+
+function renderPreprocessingStepsModal(steps) {
+  const container = document.getElementById("preprocessingStepsModal");
+  if (!container) {
+    return;
+  }
+
+  container.innerHTML = "";
+  if (!steps || steps.length === 0) {
+    container.innerHTML = '<p class="text-sm text-slate-500">Tidak ada data preprocessing.</p>';
+    return;
+  }
+
+  steps.forEach((step, idx) => {
+    const stepDiv = document.createElement("div");
+    stepDiv.className = "rounded-xl border-2 border-ink bg-blue-50 p-4";
+
+    let content = `<p class="font-semibold text-sm text-blue-900">Step ${step.step}: ${step.name}</p>`;
+    content += `<p class="text-xs text-blue-700 mt-1">${step.description}</p>`;
+
+    if (step.step === 1) {
+      content += '<p class="text-xs text-blue-600 mt-2 italic">Ini adalah nilai mentah yang Anda input dari form. Belum ada transformasi apapun.</p>';
+    } else if (step.step === 2) {
+      content += '<p class="text-xs text-blue-600 mt-2 italic">Data sudah melalui normalisasi (scaling), imputation (mengisi missing values), dan encoding (mengubah kategori menjadi angka). Ini adalah format yang digunakan oleh Decision Tree model.</p>';
+    }
+
+    if (step.data) {
+      const keys = Object.keys(step.data).slice(0, 5);
+      content += '<div class="mt-2 text-xs text-blue-800 bg-white rounded p-2">';
+      keys.forEach(key => {
+        const value = step.data[key];
+        content += `<div><strong>${key}:</strong> ${typeof value === 'number' ? value.toFixed(2) : value}</div>`;
+      });
+      if (Object.keys(step.data).length > 5) {
+        content += `<div class="text-blue-600 italic">... dan ${Object.keys(step.data).length - 5} field lainnya</div>`;
+      }
+      content += '</div>';
+    }
+
+    if (step.features && step.sample_values) {
+      content += '<div class="mt-2 text-xs text-blue-800 bg-white rounded p-2">';
+      content += '<strong>Sample Features (setelah preprocessing):</strong><br>';
+      for (let i = 0; i < Math.min(5, step.features.length); i++) {
+        content += `<div>${step.features[i]}: ${step.sample_values[i].toFixed(4)}</div>`;
+      }
+      if (step.features.length > 5) {
+        content += `<div class="text-blue-600 italic">... dan ${step.features.length - 5} features lainnya</div>`;
+      }
+      content += '</div>';
+    }
+
+    stepDiv.innerHTML = content;
+    container.appendChild(stepDiv);
+    try { applyRevealToElement(stepDiv, idx); } catch (e) {}
+  });
+}
+
+function renderPredictionProbabilitiesModal(probabilities) {
+  const container = document.getElementById("predictionProbabilitiesModal");
+  if (!container) {
+    return;
+  }
+
+  container.innerHTML = "";
+  if (!probabilities || Object.keys(probabilities).length === 0) {
+    container.innerHTML = '<p class="text-sm text-slate-500">Tidak ada data probabilitas.</p>';
+    return;
+  }
+
+  const targetLabels = {
+    'stress_level': 'Tingkat Stres',
+    'anxiety_level': 'Tingkat Kecemasan',
+    'final_state': 'Status Akhir',
+    'intervention_response': 'Respons Intervensi'
+  };
+
+  const targetExplanations = {
+    'stress_level': 'Probabilitas tingkat stres Anda. Semakin tinggi persentase "High", semakin besar kemungkinan Anda mengalami stres tinggi.',
+    'anxiety_level': 'Probabilitas tingkat kecemasan Anda. Menunjukkan seberapa yakin model dengan prediksi level kecemasan.',
+    'final_state': 'Probabilitas status akhir kesehatan mental Anda. Bisa "Relaxed", "Neutral", atau "Stress".',
+    'intervention_response': 'Probabilitas respons terhadap intervensi. Menunjukkan apakah intervensi akan "Positive", "Neutral", atau "Negative".'
+  };
+
+  Object.entries(probabilities).forEach(([target, classProbs], idx) => {
+    const targetDiv = document.createElement("div");
+    targetDiv.className = "rounded-xl border-2 border-ink bg-purple-50 p-4";
+
+    let content = `<p class="font-semibold text-sm text-purple-900">${targetLabels[target] || target}</p>`;
+    content += `<p class="text-xs text-purple-700 mt-1">${targetExplanations[target] || 'Probabilitas prediksi untuk target ini.'}</p>`;
+    content += '<div class="mt-3 space-y-2">';
+
+    const sortedClasses = Object.entries(classProbs).sort((a, b) => b[1] - a[1]);
+    sortedClasses.forEach(([className, prob]) => {
+      const percentage = Math.round(prob * 100);
+      const barWidth = Math.max(percentage, 5);
+      content += `
+        <div class="text-xs">
+          <div class="flex justify-between mb-1">
+            <span class="text-purple-900 font-medium">${className}</span>
+            <span class="text-purple-700">${percentage}%</span>
+          </div>
+          <div class="w-full bg-white border border-purple-200 rounded h-2">
+            <div class="bg-purple-500 h-2 rounded" style="width: ${barWidth}%"></div>
+          </div>
+        </div>
+      `;
+    });
+
+    content += '</div>';
+    content += '<p class="text-xs text-purple-600 mt-2 italic">Sumber: Dihitung dari predict_proba() method DecisionTreeClassifier.</p>';
+    targetDiv.innerHTML = content;
+    container.appendChild(targetDiv);
+    try { applyRevealToElement(targetDiv, idx); } catch (e) {}
+  });
+}
+
+function renderRecommendationsModal(level) {
+  const list = document.getElementById("recommendationListModal");
   if (!list) {
     return;
   }
@@ -940,6 +1130,59 @@ function setupDatasetModal() {
   });
 }
 
+function setupDetailsModal() {
+  const modal = document.getElementById("detailsModal");
+  const openButton = document.getElementById("openDetailsModal");
+  const closeButton = document.getElementById("closeDetailsModal");
+
+  if (!modal) {
+    return;
+  }
+
+  const openModal = () => {
+    modal.classList.remove("hidden");
+    document.body.style.overflow = "hidden";
+  };
+
+  const closeModal = () => {
+    modal.classList.add("hidden");
+    document.body.style.overflow = "";
+  };
+
+  if (openButton) {
+    openButton.addEventListener("click", openModal);
+  }
+
+  if (closeButton) {
+    closeButton.addEventListener("click", closeModal);
+  }
+
+  modal.addEventListener("click", (event) => {
+    if (event.target?.dataset?.modalOverlay === "true") {
+      closeModal();
+    }
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      closeModal();
+    }
+  });
+
+  const toggleButtons = modal.querySelectorAll("[data-toggle-info]");
+  toggleButtons.forEach((button) => {
+    button.addEventListener("click", (e) => {
+      e.preventDefault();
+      const targetId = button.dataset.toggleInfo;
+      const targetElement = modal.querySelector(`#${targetId}`);
+      if (targetElement) {
+        targetElement.classList.toggle("hidden");
+        button.textContent = targetElement.classList.contains("hidden") ? "Apa ini?" : "Sembunyikan";
+      }
+    });
+  });
+}
+
 function setupClearButton(form) {
   const clearButton = document.getElementById("clearForm");
   const results = document.getElementById("results");
@@ -1080,12 +1323,15 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   renderDecisionPaths({});
-  renderKeyFactors({});
-  renderRecommendations(null);
+  renderKeyFactorsModal({});
+  renderPreprocessingStepsModal([]);
+  renderPredictionProbabilitiesModal({});
+  renderRecommendationsModal(null);
   loadTrees();
   loadDatasetPreview();
   setupTreeTabs();
   setupDatasetModal();
+  setupDetailsModal();
   setupClearButton(form);
   setupStepper();
   setupDropdowns();

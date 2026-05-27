@@ -51,7 +51,7 @@ TARGETS = [
     "Stress_Level",
     "Anxiety_Level",
     "Final_State",
-    "Intervention",
+    "Intervention_Response",
 ]
 
 DATASET_CANDIDATES = ["dataset.csv", "psychological_regulation_dataset.csv"]
@@ -80,14 +80,17 @@ def _split_features(
 
 def _normalize_intervention_response(data: pd.DataFrame) -> pd.DataFrame:
     if "Intervention_Response" not in data.columns:
+        if "Previous_Intervention" in data.columns:
+            data = data.copy()
+            data["Intervention_Response"] = data["Previous_Intervention"]
         return data
 
+    data = data.copy()
     series = data["Intervention_Response"]
     numeric_series = pd.to_numeric(series, errors="coerce")
-    numeric_ratio = numeric_series.notna().mean()
+    numeric_ratio = numeric_series.notna().sum() / len(series)
 
-    if pd.api.types.is_numeric_dtype(series) or numeric_ratio > 0.8:
-        data = data.copy()
+    if numeric_ratio > 0.8:
         data["Intervention_Response"] = pd.cut(
             numeric_series,
             bins=[-float("inf"), 0.33, 0.66, float("inf")],
@@ -158,11 +161,11 @@ def train() -> None:
         )
 
     data = pd.read_csv(dataset_path)
-    if "Intervention" not in data.columns and "Previous_Intervention" in data.columns:
+    if "Intervention_Response" not in data.columns and "Previous_Intervention" in data.columns:
         LOGGER.warning(
-            "Dataset is missing 'Intervention'; using 'Previous_Intervention' instead."
+            "Dataset is missing 'Intervention_Response'; using 'Previous_Intervention' instead."
         )
-        data = data.rename(columns={"Previous_Intervention": "Intervention"})
+        data = data.rename(columns={"Previous_Intervention": "Intervention_Response"})
     feature_cols = _get_feature_columns()
     data = _normalize_intervention_response(data)
     missing_cols = [col for col in feature_cols + TARGETS if col not in data.columns]

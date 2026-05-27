@@ -35,7 +35,7 @@ TARGETS = [
     "stress_level",
     "anxiety_level",
     "final_state",
-    "recommended_intervention",
+    "intervention_response",
 ]
 
 CATEGORICAL_COLUMNS = [
@@ -129,6 +129,24 @@ class Predictor:
             return 0.0
         return float(np.mean(max_probs))
 
+    def _get_prediction_probabilities(self, frame: pd.DataFrame) -> Dict[str, Dict[str, float]]:
+        """Extract probabilities for each target and class."""
+        try:
+            probas = self.pipeline.predict_proba(frame)
+        except (AttributeError, TypeError):
+            return {}
+
+        estimators = self.pipeline.named_steps["model"].estimators_
+        result = {}
+
+        for target, estimator, proba in zip(TARGETS, estimators, probas):
+            class_probs = {}
+            for class_label, prob_value in zip(estimator.classes_, proba[0]):
+                class_probs[str(class_label)] = round(float(prob_value), 4)
+            result[target] = class_probs
+
+        return result
+
     def _explanation(self, payload: Dict[str, Any], recommendation: str) -> str:
         reasons = []
         if payload["stress_score"] >= 60:
@@ -144,27 +162,33 @@ class Predictor:
 
         return f"Stress indicators are within expected ranges. {recommendation} recommended."
 
-    def _apply_post_rules(
-        self, predictions: Dict[str, str], payload: Dict[str, Any]
-    ) -> Dict[str, str]:
-        stress_score = float(payload["stress_score"])
-        anxiety_score = float(payload["anxiety_score"])
+    def _get_preprocessing_steps(self, payload: Dict[str, Any], frame: pd.DataFrame) -> List[Dict[str, Any]]:
+        """Generate detailed preprocessing steps for transparency."""
+        steps = []
 
-        if stress_score >= 65:
-            predictions["stress_level"] = "High"
-        elif stress_score >= 35:
-            predictions["stress_level"] = "Medium"
-        else:
-            predictions["stress_level"] = "Low"
+        steps.append({
+            "step": 1,
+            "name": "Input Values",
+            "description": "Raw input dari form",
+            "data": payload
+        })
 
-        if anxiety_score >= 65:
-            predictions["anxiety_level"] = "High"
-        elif anxiety_score >= 35:
-            predictions["anxiety_level"] = "Medium"
-        else:
-            predictions["anxiety_level"] = "Low"
+        preprocessor = self._get_preprocessor()
+        try:
+            transformed = preprocessor.transform(frame)
+            feature_names = self._get_feature_names()
 
-        return predictions
+            steps.append({
+                "step": 2,
+                "name": "Feature Preprocessing",
+                "description": "Setelah normalisasi, imputation, dan encoding",
+                "features": feature_names[:10],
+                "sample_values": [float(v) for v in transformed[0][:10]]
+            })
+        except Exception as e:
+            LOGGER.warning("Could not extract preprocessing details: %s", e)
+
+        return steps
 
     def _build_decision_path(
         self, estimator: Any, feature_names: List[str], sample: np.ndarray
@@ -239,10 +263,11 @@ class Predictor:
         confidence = self._confidence(probas)
 
         predictions = dict(zip(TARGETS, prediction))
-        predictions = self._apply_post_rules(predictions, payload)
-        recommendation = predictions["recommended_intervention"]
+        recommendation = predictions.get("intervention_response", "No recommendation")
         explanation = self._explanation(payload, recommendation)
         decision_paths = self.get_decision_paths(payload)
+        preprocessing_steps = self._get_preprocessing_steps(payload, frame)
+        prediction_probabilities = self._get_prediction_probabilities(frame)
 
         output = PredictionOutput(
             success=True,
@@ -252,4 +277,6 @@ class Predictor:
         )
         response = output.__dict__
         response["decision_paths"] = decision_paths
+        response["preprocessing_steps"] = preprocessing_steps
+        response["prediction_probabilities"] = prediction_probabilities
         return response

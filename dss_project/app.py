@@ -132,7 +132,7 @@ def predict() -> Any:
 
         result = PREDICTOR.predict(payload)
         return jsonify(result)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         LOGGER.exception("Prediction failed")
         return jsonify({"success": False, "error": str(exc)}), 500
 

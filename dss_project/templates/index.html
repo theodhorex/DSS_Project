@@ -499,19 +499,14 @@
               </div>
             </div>
 
-            <div>
-              <h3 class="font-display text-xl">Faktor Utama</h3>
-              <ul id="keyFactors" class="mt-2 space-y-2"></ul>
-            </div>
-
-            <div>
-              <h3 class="font-display text-xl">Rekomendasi Aksi</h3>
-              <ul id="recommendationList" class="mt-2 space-y-2"></ul>
-            </div>
-
             <div class="rounded-2xl border-2 border-ink bg-white p-4 text-sm text-slate-600">
               <p id="explanationText">--</p>
             </div>
+
+            <button id="openDetailsModal"
+              class="w-full rounded-full border-2 border-ink bg-sun px-6 py-3 text-xs font-bold uppercase tracking-widest shadow-brutal transition hover:-translate-y-0.5">
+              Lihat Detail Analisis
+            </button>
           </div>
         </div>
 
@@ -537,6 +532,58 @@
             <p class="mt-3 text-sm text-slate-600">Pilih target untuk melihat tree dan jalur keputusan dari input kamu.
             </p>
           </div>
+
+          <div class="rounded-2xl border-2 border-green-300 bg-green-50 p-4">
+            <details class="cursor-pointer">
+              <summary class="font-semibold text-green-900 text-sm hover:text-green-700">
+                📖 Cara Membaca Decision Tree (klik untuk buka)
+              </summary>
+              <div class="mt-3 text-xs text-green-800 space-y-2">
+                <p><strong>Struktur Tree:</strong></p>
+                <ul class="list-disc list-inside space-y-1 ml-2">
+                  <li><strong>Kotak di atas (Root):</strong> Pertanyaan pertama yang paling penting</li>
+                  <li><strong>Kotak di tengah (Internal Nodes):</strong> Pertanyaan lanjutan berdasarkan jawaban sebelumnya</li>
+                  <li><strong>Kotak di bawah (Leaf Nodes):</strong> Hasil prediksi akhir</li>
+                </ul>
+
+                <p class="mt-2"><strong>Informasi di setiap kotak:</strong></p>
+                <ul class="list-disc list-inside space-y-1 ml-2">
+                  <li><strong>Kondisi (contoh: "Stress_Score <= 50.00"):</strong> Pertanyaan yang diajukan</li>
+                  <li><strong>Warna:</strong> Menunjukkan kelas mana yang paling dominan (semakin gelap = semakin yakin)</li>
+                  <li><strong>Angka di bawah:</strong> Jumlah data training yang masuk ke node ini</li>
+                  <li><strong>Persentase:</strong> Distribusi kelas di node ini (contoh: [30%, 50%, 20%])</li>
+                </ul>
+
+                <p class="mt-2"><strong>Cara mengikuti alur:</strong></p>
+                <ul class="list-disc list-inside space-y-1 ml-2">
+                  <li>Mulai dari kotak paling atas (root node)</li>
+                  <li>Cek apakah nilai Anda memenuhi kondisi (TRUE/FALSE)</li>
+                  <li>Ikuti garis ke kiri (jika TRUE/<=) atau ke kanan (jika FALSE/>)</li>
+                  <li>Ulangi sampai mencapai kotak paling bawah (leaf node) = hasil prediksi</li>
+                </ul>
+
+                <p class="mt-2"><strong>Jalur Keputusan Anda:</strong></p>
+                <p class="ml-2">Di bawah setiap tree, ada "Jalur Keputusan" yang menunjukkan step-by-step keputusan yang diambil model untuk data Anda. Ini adalah penjelasan tekstual dari alur yang Anda ikuti di tree visual.</p>
+              </div>
+            </details>
+          </div>
+          <div class="rounded-2xl border-2 border-blue-200 bg-blue-50 p-4">
+            <p class="text-sm font-semibold text-blue-900">Bagaimana hasil prediksi didapat</p>
+            <ul class="mt-2 list-disc list-inside space-y-1 text-xs text-blue-800">
+              <li>Input kamu diproses (imputasi dan encoding) agar sesuai format model.</li>
+              <li>Model membaca tree dari root, mengecek kondisi, lalu mengikuti cabang kiri/kanan.</li>
+              <li>Node terakhir (leaf) menentukan kelas hasil prediksi untuk tiap target.</li>
+              <li>Probabilitas dihasilkan dari distribusi kelas di leaf sehingga terlihat tingkat keyakinan.</li>
+            </ul>
+            <p class="mt-3 text-sm font-semibold text-blue-900">Isi dan arti elemen di decision tree</p>
+            <ul class="mt-2 list-disc list-inside space-y-1 text-xs text-blue-800">
+              <li>Kondisi: aturan split, misalnya "Stress_Score &lt;= 50".</li>
+              <li>Samples: jumlah data training yang masuk ke node tersebut.</li>
+              <li>Value: distribusi kelas pada node (untuk menghitung probabilitas).</li>
+              <li>Class: kelas dominan di node (hasil prediksi jika leaf).</li>
+            </ul>
+          </div>
+        </div>
           <div class="flex flex-wrap gap-2" role="tablist" aria-label="Pilih target tree">
             <button type="button"
               class="tree-tab rounded-full border-2 border-ink bg-sun px-6 py-3 text-xs font-bold uppercase tracking-widest transition hover:-translate-y-0.5"
@@ -549,7 +596,7 @@
               data-target="final_state" aria-pressed="false">Status Akhir</button>
             <button type="button"
               class="tree-tab rounded-full border-2 border-ink bg-white px-6 py-3 text-xs font-bold uppercase tracking-widest transition hover:-translate-y-0.5"
-              data-target="recommended_intervention" aria-pressed="false">Intervensi</button>
+              data-target="intervention_response" aria-pressed="false">Intervensi</button>
           </div>
         </div>
 
@@ -561,6 +608,9 @@
               class="text-xs font-bold uppercase tracking-widest text-slate-500 bg-white px-3 py-1 rounded-full border border-slate-300"
               id="treeStatus-stress_level">Memuat...</span>
           </div>
+          <div class="text-xs text-slate-600 bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <p><strong>Penjelasan:</strong> Tree ini memprediksi tingkat stres Anda (Low, Medium, High) berdasarkan indikator psikologis dan akademik. Model ini dilatih dengan 10,000 data mahasiswa untuk belajar pola hubungan antara input dan tingkat stres.</p>
+          </div>
           <div class="bg-white rounded-xl border-2 border-ink p-6 overflow-hidden">
             <div class="tree-grid-container">
               <div id="tree-stress_level" class="tree-grid"></div>
@@ -568,6 +618,8 @@
           </div>
           <div class="bg-white rounded-xl border-2 border-ink p-4">
             <h4 class="font-display text-lg font-bold mb-3">Jalur Keputusan</h4>
+            <p class="text-xs text-slate-600 mb-3">Berikut adalah step-by-step keputusan yang diambil model untuk prediksi Anda:</p>
+            <p class="text-xs text-slate-500 mb-3">Setiap baris menampilkan kondisi, nilai input, dan arah cabang. left berarti memenuhi kondisi (<= atau true), right berarti tidak memenuhi (> atau false). Baris terakhir mengarah ke leaf yang menentukan hasil prediksi.</p>
             <ol class="space-y-2" id="path-stress_level"></ol>
           </div>
         </article>
@@ -580,6 +632,9 @@
               class="text-xs font-bold uppercase tracking-widest text-slate-500 bg-white px-3 py-1 rounded-full border border-slate-300"
               id="treeStatus-anxiety_level">Memuat...</span>
           </div>
+          <div class="text-xs text-slate-600 bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <p><strong>Penjelasan:</strong> Tree ini memprediksi tingkat kecemasan Anda (Low, Medium, High) berdasarkan indikator emosional dan fisiologis. Kecemasan berbeda dengan stres - ini lebih fokus pada perasaan khawatir dan gelisah.</p>
+          </div>
           <div class="bg-white rounded-xl border-2 border-ink p-6 overflow-hidden">
             <div class="tree-grid-container">
               <div id="tree-anxiety_level" class="tree-grid"></div>
@@ -587,6 +642,8 @@
           </div>
           <div class="bg-white rounded-xl border-2 border-ink p-4">
             <h4 class="font-display text-lg font-bold mb-3">Jalur Keputusan</h4>
+            <p class="text-xs text-slate-600 mb-3">Berikut adalah step-by-step keputusan yang diambil model untuk prediksi Anda:</p>
+            <p class="text-xs text-slate-500 mb-3">Setiap baris menampilkan kondisi, nilai input, dan arah cabang. left berarti memenuhi kondisi (<= atau true), right berarti tidak memenuhi (> atau false). Baris terakhir mengarah ke leaf yang menentukan hasil prediksi.</p>
             <ol class="space-y-2" id="path-anxiety_level"></ol>
           </div>
         </article>
@@ -599,6 +656,9 @@
               class="text-xs font-bold uppercase tracking-widest text-slate-500 bg-white px-3 py-1 rounded-full border border-slate-300"
               id="treeStatus-final_state">Memuat...</span>
           </div>
+          <div class="text-xs text-slate-600 bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <p><strong>Penjelasan:</strong> Tree ini memprediksi status kesehatan mental akhir Anda (Relaxed, Neutral, Stress) dengan mempertimbangkan semua indikator secara holistik. Ini adalah kesimpulan keseluruhan tentang kondisi psikologis Anda.</p>
+          </div>
           <div class="bg-white rounded-xl border-2 border-ink p-6 overflow-hidden">
             <div class="tree-grid-container">
               <div id="tree-final_state" class="tree-grid"></div>
@@ -606,26 +666,33 @@
           </div>
           <div class="bg-white rounded-xl border-2 border-ink p-4">
             <h4 class="font-display text-lg font-bold mb-3">Jalur Keputusan</h4>
+            <p class="text-xs text-slate-600 mb-3">Berikut adalah step-by-step keputusan yang diambil model untuk prediksi Anda:</p>
+            <p class="text-xs text-slate-500 mb-3">Setiap baris menampilkan kondisi, nilai input, dan arah cabang. left berarti memenuhi kondisi (<= atau true), right berarti tidak memenuhi (> atau false). Baris terakhir mengarah ke leaf yang menentukan hasil prediksi.</p>
             <ol class="space-y-2" id="path-final_state"></ol>
           </div>
         </article>
 
         <article class="tree-card hidden flex-col gap-4 rounded-2xl border-2 border-ink bg-slate-50 p-6"
-          data-target="recommended_intervention" role="tabpanel">
+          data-target="intervention_response" role="tabpanel">
           <div class="flex items-center justify-between gap-2">
             <h3 class="font-display text-2xl font-black">Tree Intervensi</h3>
             <span
               class="text-xs font-bold uppercase tracking-widest text-slate-500 bg-white px-3 py-1 rounded-full border border-slate-300"
-              id="treeStatus-recommended_intervention">Memuat...</span>
+              id="treeStatus-intervention_response">Memuat...</span>
+          </div>
+          <div class="text-xs text-slate-600 bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <p><strong>Penjelasan:</strong> Tree ini memprediksi respons Anda terhadap intervensi atau bantuan (Positive, Neutral, Negative). Ini membantu menentukan apakah tindakan intervensi akan efektif untuk kondisi Anda.</p>
           </div>
           <div class="bg-white rounded-xl border-2 border-ink p-6 overflow-hidden">
             <div class="tree-grid-container">
-              <div id="tree-recommended_intervention" class="tree-grid"></div>
+              <div id="tree-intervention_response" class="tree-grid"></div>
             </div>
           </div>
           <div class="bg-white rounded-xl border-2 border-ink p-4">
             <h4 class="font-display text-lg font-bold mb-3">Jalur Keputusan</h4>
-            <ol class="space-y-2" id="path-recommended_intervention"></ol>
+            <p class="text-xs text-slate-600 mb-3">Berikut adalah step-by-step keputusan yang diambil model untuk prediksi Anda:</p>
+            <p class="text-xs text-slate-500 mb-3">Setiap baris menampilkan kondisi, nilai input, dan arah cabang. left berarti memenuhi kondisi (<= atau true), right berarti tidak memenuhi (> atau false). Baris terakhir mengarah ke leaf yang menentukan hasil prediksi.</p>
+            <ol class="space-y-2" id="path-intervention_response"></ol>
           </div>
         </article>
       </div>
@@ -633,18 +700,20 @@
 
     <section class="mt-14 rounded-3xl border-2 border-ink bg-white p-6 shadow-brutal section-animate"
       aria-labelledby="datasetTitle" reveal data-animate>
-      <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div>
-          <p class="text-xs font-bold uppercase tracking-widest text-slate-500">Dataset</p>
-          <h2 id="datasetTitle" class="font-display text-3xl">Preview Dataset</h2>
-          <p class="mt-2 text-sm text-slate-600">Cek sampel data training dan validasi input.</p>
+      <div class="space-y-6">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <p class="text-xs font-bold uppercase tracking-widest text-slate-500">Dataset</p>
+            <h2 id="datasetTitle" class="font-display text-3xl">Preview Dataset</h2>
+            <p class="mt-2 text-sm text-slate-600">Cek sampel data training dan validasi input.</p>
+          </div>
+          <button id="openDatasetModalSecondary"
+            class="rounded-full border-2 border-ink bg-white px-6 py-3 text-xs font-bold uppercase tracking-widest shadow-brutal-sm transition hover:-translate-y-0.5">
+            Buka Preview
+          </button>
         </div>
-        <button id="openDatasetModalSecondary"
-          class="rounded-full border-2 border-ink bg-white px-6 py-3 text-xs font-bold uppercase tracking-widest shadow-brutal-sm transition hover:-translate-y-0.5">
-          Buka Preview
-        </button>
+        <p id="datasetSummary" class="text-sm text-slate-600">Memuat preview dataset...</p>
       </div>
-      <p id="datasetSummary" class="mt-4 text-sm text-slate-600">Memuat preview dataset...</p>
     </section>
   </div>
 
@@ -673,6 +742,143 @@
             </thead>
             <tbody class="divide-y divide-slate-200"></tbody>
           </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="detailsModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4" role="dialog"
+    aria-modal="true" aria-labelledby="detailsModalTitle">
+    <div class="absolute inset-0 bg-slate-900/60" data-modal-overlay="true"></div>
+    <div
+      class="relative w-full max-w-4xl max-h-[90vh] flex flex-col rounded-3xl border-2 border-ink bg-white shadow-brutal">
+      <div
+        class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between p-6 border-b-2 border-ink flex-shrink-0">
+        <div>
+          <h3 id="detailsModalTitle" class="font-display text-3xl">Detail Analisis Prediksi</h3>
+          <p class="text-sm text-slate-600">Informasi lengkap tentang proses prediksi dan hasil analisis.</p>
+        </div>
+        <button id="closeDetailsModal"
+          class="rounded-full border-2 border-ink bg-white px-4 py-2 text-xs font-bold uppercase tracking-widest shadow-brutal-sm transition hover:-translate-y-0.5">
+          Tutup
+        </button>
+      </div>
+      <div class="flex-1 overflow-y-auto hide-scrollbar p-6 space-y-6">
+
+        <div>
+          <div class="flex items-start justify-between gap-4 mb-3">
+            <h4 class="font-display text-xl font-bold">Penjelasan Decision Tree</h4>
+            <button class="text-xs font-bold text-blue-600 hover:text-blue-800 underline" data-toggle-info="decisionTreeInfo">
+              Apa ini?
+            </button>
+          </div>
+          <div id="decisionTreeInfo" class="hidden rounded-xl border-2 border-green-200 bg-green-50 p-3 mb-3 text-xs text-green-800">
+            <p><strong>Apa itu Decision Tree?</strong></p>
+            <p class="mt-2">Decision Tree adalah model machine learning yang membuat keputusan dengan cara mirip seperti diagram alur. Model ini mengajukan pertanyaan beruntun tentang data Anda (contoh: "Apakah stress score > 50?") dan berdasarkan jawaban, model akan terus menggali lebih dalam hingga mencapai kesimpulan akhir.</p>
+
+            <p class="mt-2"><strong>Bagaimana cara kerjanya?</strong></p>
+            <ul class="list-disc list-inside mt-2 space-y-1">
+              <li><strong>Root Node (Akar):</strong> Pertanyaan pertama yang paling penting untuk membedakan data</li>
+              <li><strong>Internal Nodes (Cabang):</strong> Pertanyaan-pertanyaan lanjutan berdasarkan jawaban sebelumnya</li>
+              <li><strong>Leaf Nodes (Daun):</strong> Kesimpulan akhir atau prediksi hasil</li>
+              <li><strong>Split:</strong> Pembagian data berdasarkan kondisi tertentu (contoh: <= 50 atau > 50)</li>
+            </ul>
+
+            <p class="mt-2"><strong>Keuntungan Decision Tree:</strong></p>
+            <ul class="list-disc list-inside mt-2 space-y-1">
+              <li>Mudah dipahami dan dijelaskan (interpretable)</li>
+              <li>Dapat menunjukkan alasan keputusan step-by-step</li>
+              <li>Tidak perlu normalisasi data khusus</li>
+              <li>Cocok untuk data dengan banyak kategori</li>
+            </ul>
+
+            <p class="mt-2"><strong>Dalam sistem ini:</strong></p>
+            <ul class="list-disc list-inside mt-2 space-y-1">
+              <li>Ada 4 Decision Tree terpisah untuk 4 target berbeda (Stress Level, Anxiety Level, Final State, Intervention Response)</li>
+              <li>Setiap tree belajar dari 10,000 data training</li>
+              <li>Visualisasi tree ditampilkan di bagian "Visualisasi Pohon Keputusan"</li>
+              <li>Jalur keputusan Anda ditampilkan di "Faktor Utama" section</li>
+            </ul>
+
+            <p class="mt-2"><strong>Sumber Data:</strong> Dilatih menggunakan sklearn DecisionTreeClassifier dengan data training yang sudah diproses dan dinormalisasi.</p>
+          </div>
+          <div class="rounded-xl border-2 border-green-200 bg-green-50 p-4 text-sm text-green-800">
+            <p><strong>💡 Tips membaca Decision Tree:</strong></p>
+            <ul class="list-disc list-inside mt-2 space-y-1 text-xs">
+              <li>Ikuti alur dari atas (root) ke bawah sesuai dengan kondisi Anda</li>
+              <li>Setiap node menunjukkan pertanyaan dan nilai input Anda</li>
+              <li>Warna node menunjukkan kelas mana yang paling dominan di node tersebut</li>
+              <li>Angka di node menunjukkan berapa banyak data training yang masuk ke node itu</li>
+              <li>Lihat "Jalur Keputusan" di bawah tree untuk penjelasan step-by-step</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="border-t-2 border-ink pt-6">
+          <div class="flex items-start justify-between gap-4 mb-3">
+            <h4 class="font-display text-xl font-bold">Faktor Utama</h4>
+            <button class="text-xs font-bold text-blue-600 hover:text-blue-800 underline" data-toggle-info="keyFactorsInfo">
+              Apa ini?
+            </button>
+          </div>
+          <div id="keyFactorsInfo" class="hidden rounded-xl border-2 border-blue-200 bg-blue-50 p-3 mb-3 text-xs text-blue-800">
+            <p><strong>Penjelasan:</strong> Faktor utama adalah langkah-langkah keputusan pertama yang diambil model Decision Tree berdasarkan input Anda. Ini menunjukkan kondisi mana yang paling mempengaruhi hasil prediksi tingkat stres.</p>
+            <p class="mt-2"><strong>Sumber Data:</strong> Diekstrak dari decision path tree untuk target "Stress Level" dan "Final State".</p>
+          </div>
+          <ul id="keyFactorsModal" class="space-y-2"></ul>
+        </div>
+
+        <div class="border-t-2 border-ink pt-6">
+          <div class="flex items-start justify-between gap-4 mb-3">
+            <h4 class="font-display text-xl font-bold">Tahapan Preprocessing</h4>
+            <button class="text-xs font-bold text-blue-600 hover:text-blue-800 underline" data-toggle-info="preprocessingInfo">
+              Apa ini?
+            </button>
+          </div>
+          <div id="preprocessingInfo" class="hidden rounded-xl border-2 border-blue-200 bg-blue-50 p-3 mb-3 text-xs text-blue-800">
+            <p><strong>Penjelasan:</strong> Preprocessing adalah tahapan persiapan data sebelum masuk ke model machine learning. Ini termasuk:</p>
+            <ul class="list-disc list-inside mt-2 space-y-1">
+              <li><strong>Step 1 - Input Values:</strong> Nilai-nilai mentah yang Anda input dari form</li>
+              <li><strong>Step 2 - Feature Preprocessing:</strong> Data setelah melalui normalisasi (scaling), imputation (mengisi missing values), dan encoding (mengubah kategori menjadi angka)</li>
+            </ul>
+            <p class="mt-2"><strong>Sumber Data:</strong> Diproses oleh sklearn ColumnTransformer dengan SimpleImputer dan OneHotEncoder.</p>
+          </div>
+          <div id="preprocessingStepsModal" class="space-y-2"></div>
+        </div>
+
+        <div class="border-t-2 border-ink pt-6">
+          <div class="flex items-start justify-between gap-4 mb-3">
+            <h4 class="font-display text-xl font-bold">Probabilitas Prediksi</h4>
+            <button class="text-xs font-bold text-blue-600 hover:text-blue-800 underline" data-toggle-info="probabilitiesInfo">
+              Apa ini?
+            </button>
+          </div>
+          <div id="probabilitiesInfo" class="hidden rounded-xl border-2 border-blue-200 bg-blue-50 p-3 mb-3 text-xs text-blue-800">
+            <p><strong>Penjelasan:</strong> Probabilitas prediksi menunjukkan tingkat keyakinan model untuk setiap kemungkinan output. Semakin tinggi persentase, semakin yakin model dengan prediksi tersebut.</p>
+            <p class="mt-2"><strong>Contoh:</strong> Jika "Stress Level" menunjukkan High: 53%, Medium: 35%, Low: 12%, berarti model 53% yakin Anda mengalami stres tinggi.</p>
+            <p class="mt-2"><strong>Sumber Data:</strong> Dihitung dari predict_proba() method DecisionTreeClassifier untuk setiap target output.</p>
+          </div>
+          <div id="predictionProbabilitiesModal" class="space-y-3"></div>
+        </div>
+
+        <div class="border-t-2 border-ink pt-6">
+          <div class="flex items-start justify-between gap-4 mb-3">
+            <h4 class="font-display text-xl font-bold">Rekomendasi Aksi</h4>
+            <button class="text-xs font-bold text-blue-600 hover:text-blue-800 underline" data-toggle-info="recommendationInfo">
+              Apa ini?
+            </button>
+          </div>
+          <div id="recommendationInfo" class="hidden rounded-xl border-2 border-blue-200 bg-blue-50 p-3 mb-3 text-xs text-blue-800">
+            <p><strong>Penjelasan:</strong> Rekomendasi aksi adalah saran tindakan praktis berdasarkan tingkat stres yang diprediksi. Setiap level stres memiliki rekomendasi berbeda:</p>
+            <ul class="list-disc list-inside mt-2 space-y-1">
+              <li><strong>Low:</strong> Pertahankan rutinitas yang sudah baik</li>
+              <li><strong>Medium:</strong> Atur ulang prioritas dan tambah relaksasi</li>
+              <li><strong>High:</strong> Kurangi aktivitas non-prioritas dan cari dukungan</li>
+              <li><strong>Critical:</strong> Segera cari dukungan profesional</li>
+            </ul>
+            <p class="mt-2"><strong>Sumber Data:</strong> Berdasarkan mapping level stres ke ACTION_RECOMMENDATIONS yang telah ditentukan.</p>
+          </div>
+          <ul id="recommendationListModal" class="space-y-2"></ul>
         </div>
       </div>
     </div>
