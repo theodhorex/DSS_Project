@@ -205,40 +205,83 @@ class Predictor:
         return result
 
     def _explanation(self, predictions: Dict[str, Any]) -> str:
-        stress = predictions.get("stress_level", "")
-        anxiety = predictions.get("anxiety_level", "")
-        final = predictions.get("final_state", "")
-        intervention = predictions.get("intervention_response", "")
+        stress = predictions.get("stress_level", "Low")
+        anxiety = predictions.get("anxiety_level", "Low")
+        final = predictions.get("final_state", "Relaxed")
+        intervention = predictions.get("intervention_response", "Neutral")
 
-        if stress == "High":
-            part1 = "Terdeteksi tingkat stres tinggi."
-        elif stress == "Medium":
-            part1 = "Tingkat stres berada di level sedang."
+        if stress == "High" or anxiety == "High":
+            tier = "high"
+        elif stress == "Medium" or anxiety == "Medium":
+            tier = "medium"
         else:
-            part1 = "Kondisi stres terpantau rendah."
+            tier = "low"
 
-        if anxiety == "High":
-            part2 = "Kecemasan juga berada di level tinggi."
-        elif anxiety == "Medium":
-            part2 = "Kecemasan berada di level sedang."
-        else:
-            part2 = "Kecemasan terpantau rendah."
+        if tier == "high":
+            stress_part = (
+                f"Tingkat stres terdeteksi {'tinggi' if stress == 'High' else 'sedang'} "
+                f"dan tingkat kecemasan {'tinggi' if anxiety == 'High' else 'sedang'}."
+            )
+            state_part = "Status akhir menunjukkan kondisi yang memerlukan perhatian segera."
+            if intervention == "Positive":
+                action_part = (
+                    "Sangat disarankan untuk segera mencari dukungan dari konselor, "
+                    "dosen pembimbing, atau orang-orang terdekat."
+                )
+            elif intervention == "Neutral":
+                action_part = (
+                    "Disarankan untuk mulai mengurangi beban akademik dan "
+                    "meningkatkan waktu istirahat."
+                )
+            else:
+                action_part = (
+                    "Kondisi memerlukan evaluasi menyeluruh. "
+                    "Pertimbangkan untuk berkonsultasi dengan profesional kesehatan mental."
+                )
+        elif tier == "medium":
+            stress_part = (
+                f"Tingkat stres berada di level {'sedang' if stress == 'Medium' else 'rendah'} "
+                f"dengan kecemasan {'sedang' if anxiety == 'Medium' else 'rendah'}."
+            )
+            if final == "Neutral":
+                state_part = "Status akhir menunjukkan kondisi yang perlu diperhatikan."
+            else:
+                state_part = "Status akhir menunjukkan kondisi yang cukup stabil namun perlu dipantau."
+            action_part = (
+                "Disarankan untuk mengatur ulang prioritas, "
+                "menambah waktu relaksasi, dan menjaga keseimbangan aktivitas harian."
+            )
+        else:  # low
+            stress_part = "Tingkat stres dan kecemasan berada di level rendah."
+            state_part = "Status akhir menunjukkan kondisi yang rileks dan sehat."
+            action_part = (
+                "Pertahankan rutinitas positif yang sudah berjalan dengan baik."
+            )
 
-        if final == "Stress":
-            part3 = "Status akhir menunjukkan kondisi stres yang perlu ditangani."
-        elif final == "Neutral":
-            part3 = "Status akhir berada dalam kondisi netral."
-        else:
-            part3 = "Status akhir menunjukkan kondisi yang rileks dan sehat."
+        return f"{stress_part} {state_part} {action_part}"
 
-        if intervention == "Positive":
-            part4 = "Disarankan untuk segera mencari bantuan atau dukungan dari orang sekitar."
-        elif intervention == "Negative":
-            part4 = "Kondisi memerlukan perhatian lebih — pertimbangkan konsultasi dengan konselor."
-        else:
-            part4 = "Pertahankan kebiasaan baik dan pantau kondisi secara berkala."
+    def _override_final_state(self, predictions: Dict[str, str]) -> Dict[str, str]:
+        stress = predictions.get("stress_level", "Low")
+        anxiety = predictions.get("anxiety_level", "Low")
+        final = predictions.get("final_state", "Relaxed")
 
-        return f"{part1} {part2} {part3} {part4}"
+        if stress == "High" or anxiety == "High":
+            if final == "Relaxed":
+                predictions["final_state"] = "Stress"
+
+        elif stress == "Medium" and anxiety == "Medium":
+            if final == "Relaxed":
+                predictions["final_state"] = "Neutral"
+
+        elif stress == "Medium" and anxiety == "Low":
+            if final == "Relaxed":
+                predictions["final_state"] = "Neutral"
+
+        if stress == "Low" and anxiety == "Low":
+            if final == "Stress":
+                predictions["final_state"] = "Relaxed"
+
+        return predictions
 
     def _get_preprocessing_steps(self, payload: Dict[str, Any], frame: pd.DataFrame) -> List[Dict[str, Any]]:
         """Generate detailed preprocessing steps for transparency."""
@@ -363,6 +406,7 @@ class Predictor:
         confidence = self._confidence(probas)
 
         predictions = dict(zip(TARGETS, prediction))
+        predictions = self._override_final_state(predictions)
         recommendation = predictions.get("intervention_response", "No recommendation")
         explanation = self._explanation(predictions)
         decision_paths = self.get_decision_paths(payload)
