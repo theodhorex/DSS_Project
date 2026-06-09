@@ -1,7 +1,5 @@
 const validationRules = {
-  stress_score: { min: 0, max: 100, type: "number" },
-  anxiety_score: { min: 0, max: 100, type: "number" },
-  reward_score: { min: 0, max: 100, type: "number" },
+  reward_score: { min: 0, max: 10, type: "number", step: 0.5 },
   attendance: { min: 0, max: 100, type: "number" },
   exam_pressure: { min: 0, max: 10, type: "number" },
   sleep_hours: { min: 0, max: 24, type: "number", step: 0.5 },
@@ -11,17 +9,14 @@ const validationRules = {
   assignment_load: { min: 0, max: 10, type: "number" },
   study_hours: { min: 0, max: 24, type: "number", step: 0.5 },
   screen_time: { min: 0, max: 24, type: "number", step: 0.5 },
+  caffeine_intake: { min: 0, max: 10, type: "number", step: 0.5 },
   facial_emotion: {
     type: "select",
     options: ["Happy", "Sad", "Angry", "Neutral", "Surprised"],
   },
   mood_state: {
     type: "select",
-    options: ["Happy", "Sad", "Anxious", "Neutral", "Excited"],
-  },
-  intervention_response: {
-    type: "select",
-    options: ["Positive", "Negative", "Neutral"],
+    options: ["Neutral", "Calm", "Tense", "Fatigued"],
   },
 };
 
@@ -690,7 +685,7 @@ function renderPredictionProbabilitiesModal(probabilities) {
     'stress_level': 'Tingkat Stres',
     'anxiety_level': 'Tingkat Kecemasan',
     'final_state': 'Status Akhir',
-    'intervention_response': 'Respons Intervensi'
+    'intervention_response': 'Rekomendasi Intervensi'
   };
 
   const targetExplanations = {
@@ -920,13 +915,21 @@ function renderTreeGraph(target, dot) {
       html += `<div class="tree-column-title">${columnTitle}</div>`;
 
       items.forEach((item) => {
-        // escape HTML then convert both escaped "\\n" and real newlines into <br>
         let escaped = String(item)
           .replace(/&/g, "&amp;")
           .replace(/</g, "&lt;")
           .replace(/>/g, "&gt;");
         const withBreaks = escaped.replace(/\\n/g, "<br>").replace(/\n/g, "<br>");
-        html += `<div class="tree-item"><div class="tree-item-content">${withBreaks}</div></div>`;
+
+        // Determine node type for styling
+        let extraClass = '';
+        if (item.includes('<=') || item.includes('IS ') || item.includes('gini')) {
+          extraClass = ' tree-node-condition';
+        } else if (item.includes('class =') || item.includes('class=')) {
+          extraClass = ' tree-node-leaf';
+        }
+
+        html += `<div class="tree-item${extraClass}"><div class="tree-item-content">${withBreaks}</div></div>`;
       });
 
       html += `</div>`;
@@ -1241,7 +1244,7 @@ function applyRevealToElement(item, idx) {
   } catch (e) {
     item.classList.add("is-visible");
       // apply reveal to tree items created via innerHTML
-      const treeItems = container.querySelectorAll('.tree-item');
+      const treeItems = item.querySelectorAll('.tree-item');
       treeItems.forEach((el, idx) => { try { applyRevealToElement(el, idx); } catch (e) {} });
   }
 }

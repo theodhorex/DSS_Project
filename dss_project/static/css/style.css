@@ -254,7 +254,7 @@ select:focus-visible {
 /* Tree Grid Styling - Multi-column layout */
 .tree-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
   gap: 28px 36px;
   min-width: 100%;
 }
@@ -384,3 +384,26 @@ select:focus-visible {
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
+/* Tree node type styling */
+.tree-grid .tree-item.tree-node-condition .tree-item-content {
+  color: #1d4ed8;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, "Roboto Mono", "Courier New", monospace;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.tree-grid .tree-item.tree-node-leaf {
+  background: #dcfce7;
+  border: 2px solid #16a34a;
+  border-radius: 8px;
+  padding: 6px 10px;
+}
+
+.tree-grid .tree-item.tree-node-leaf .tree-item-content {
+  color: #166534;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+

@@ -14,13 +14,13 @@ from sklearn.metrics import accuracy_score, classification_report
 from sklearn.model_selection import train_test_split
 from sklearn.multioutput import MultiOutputClassifier
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder
 from sklearn.tree import DecisionTreeClassifier, export_text
 
 LOGGER = logging.getLogger(__name__)
 
 FEATURES: Dict[str, List[str]] = {
-    "tier_1": ["Stress_Score", "Anxiety_Score", "Exam_Pressure"],
+    "tier_1": ["Exam_Pressure"],
     "tier_2": [
         "Sleep_Hours",
         "Social_Support",
@@ -32,20 +32,25 @@ FEATURES: Dict[str, List[str]] = {
         "Study_Hours",
         "Attendance",
         "Screen_Time",
+        "Caffeine_Intake",
     ],
     "tier_4": [
         "Facial_Emotion",
         "Mood_State",
-        "Intervention_Response",
         "Reward_Score",
     ],
 }
 
-CATEGORICAL_FEATURES = [
+CATEGORICAL_ONEHOT = [
     "Facial_Emotion",
-    "Mood_State",
-    "Intervention_Response",
 ]
+
+CATEGORICAL_ORDINAL = [
+    "Mood_State",
+]
+
+MOOD_STATE_ORDER = ["Calm", "Neutral", "Tense", "Fatigued"]
+ALL_CATEGORICAL = CATEGORICAL_ONEHOT + CATEGORICAL_ORDINAL
 
 TARGETS = [
     "Stress_Level",
@@ -72,10 +77,12 @@ def _get_feature_columns() -> List[str]:
 
 def _split_features(
     data: pd.DataFrame, feature_cols: List[str]
-) -> Tuple[pd.DataFrame, pd.DataFrame, List[str], List[str]]:
-    categorical_cols = [col for col in CATEGORICAL_FEATURES if col in feature_cols]
-    numeric_cols = [col for col in feature_cols if col not in categorical_cols]
-    return data[feature_cols], data[TARGETS], numeric_cols, categorical_cols
+) -> Tuple[pd.DataFrame, pd.DataFrame, List[str], List[str], List[str]]:
+    ordinal_cols = [col for col in CATEGORICAL_ORDINAL if col in feature_cols]
+    onehot_cols = [col for col in CATEGORICAL_ONEHOT if col in feature_cols]
+    all_cat = ordinal_cols + onehot_cols
+    numeric_cols = [col for col in feature_cols if col not in all_cat]
+    return data[feature_cols], data[TARGETS], numeric_cols, ordinal_cols, onehot_cols
 
 
 def _normalize_intervention_response(data: pd.DataFrame) -> pd.DataFrame:
@@ -99,29 +106,78 @@ def _normalize_intervention_response(data: pd.DataFrame) -> pd.DataFrame:
     return data
 
 
-def _build_pipeline(numeric_cols: List[str], categorical_cols: List[str]) -> Pipeline:
+def _build_pipeline(
+    numeric_cols: List[str],
+    ordinal_cols: List[str],
+    onehot_cols: List[str],
+) -> Pipeline:
     numeric_transformer = Pipeline(
         steps=[("imputer", SimpleImputer(strategy="median"))]
     )
-    categorical_transformer = Pipeline(
-        steps=[
-            ("imputer", SimpleImputer(strategy="most_frequent")),
-            (
-                "onehot",
-                OneHotEncoder(handle_unknown="ignore", sparse_output=False),
-            ),
-        ]
-    )
+    transformers = []
+    if numeric_cols:
+        transformers.append(("num", numeric_transformer, numeric_cols))
+    if ordinal_cols:
+        ordinal_transformer = Pipeline(
+            steps=[
+                ("imputer", SimpleImputer(strategy="most_frequent")),
+                (
+                    "ordinal",
+                    OrdinalEncoder(
+                        categories=[MOOD_STATE_ORDER],
+                        handle_unknown="use_encoded_value",
+                        unknown_value=-1,
+                    ),
+                ),
+            ]
+        )
+        transformers.append(("cat_ordinal", ordinal_transformer, ordinal_cols))
+    if onehot_cols:
+        onehot_transformer = Pipeline(
+            steps=[
+                ("imputer", SimpleImputer(strategy="most_frequent")),
+                (
+                    "onehot",
+                    OneHotEncoder(handle_unknown="ignore", sparse_output=False),
+                ),
+            ]
+        )
+        transformers.append(("cat_onehot", onehot_transformer, onehot_cols))
     preprocessor = ColumnTransformer(
-        transformers=[
-            ("num", numeric_transformer, numeric_cols),
-            ("cat", categorical_transformer, categorical_cols),
-        ],
+        transformers=transformers,
         remainder="drop",
     )
-    classifier = DecisionTreeClassifier(max_depth=10, min_samples_split=20)
+    classifier = DecisionTreeClassifier(
+        max_depth=4,
+        min_samples_split=20,
+        min_samples_leaf=10,
+        random_state=42,
+    )
     model = MultiOutputClassifier(classifier)
     return Pipeline(steps=[("preprocessor", preprocessor), ("model", model)])
+
+
+def _cross_validate(pipeline_template, x, y) -> None:
+    from sklearn.model_selection import cross_val_score
+    from sklearn.pipeline import Pipeline
+    from sklearn.tree import DecisionTreeClassifier
+    import numpy as np
+    for idx, target in enumerate(TARGETS):
+        single_pipeline = Pipeline([
+            ("preprocessor", pipeline_template.named_steps["preprocessor"]),
+            ("classifier", DecisionTreeClassifier(
+                max_depth=4, min_samples_split=20,
+                min_samples_leaf=10, random_state=42,
+            )),
+        ])
+        scores = cross_val_score(
+            single_pipeline, x, y.iloc[:, idx],
+            cv=5, scoring="accuracy"
+        )
+        LOGGER.info(
+            "CV accuracy for %s: %.4f (+/- %.4f)",
+            target, scores.mean(), scores.std()
+        )
 
 
 def _log_metrics(y_true: pd.DataFrame, y_pred: pd.DataFrame) -> None:
@@ -172,14 +228,15 @@ def train() -> None:
     if missing_cols:
         raise ValueError(f"Missing columns in dataset: {missing_cols}")
 
-    x, y, numeric_cols, categorical_cols = _split_features(data, feature_cols)
+    x, y, numeric_cols, ordinal_cols, onehot_cols = _split_features(data, feature_cols)
 
     x_train, x_test, y_train, y_test = train_test_split(
-        x, y, test_size=0.2, random_state=42, stratify=y[TARGETS[0]]
+        x, y, test_size=0.3, random_state=42, stratify=y[TARGETS[0]]
     )
 
-    pipeline = _build_pipeline(numeric_cols, categorical_cols)
+    pipeline = _build_pipeline(numeric_cols, ordinal_cols, onehot_cols)
     pipeline.fit(x_train, y_train)
+    _cross_validate(_build_pipeline(numeric_cols, ordinal_cols, onehot_cols), x, y)
 
     y_pred = pipeline.predict(x_test)
     y_pred_df = pd.DataFrame(y_pred, columns=TARGETS)

@@ -108,7 +108,7 @@
           </div>
         </h1>
         <p class="max-w-xl text-base text-slate-700 sm:text-lg">
-          Isi 15 indikator psikologis, akademik, fisik, dan sosial. <br> Sistem akan menampilkan hasil prediksi, decision paths, serta rekomendasi aksi.
+          Isi 13 indikator psikologis, akademik, fisik, dan sosial. <br> Sistem akan menampilkan hasil prediksi, decision paths, serta rekomendasi aksi.
         </p>
         <div class="flex flex-wrap gap-3">
           <a href="#formTitle"
@@ -192,7 +192,7 @@
         <div class="grid gap-4 sm:grid-cols-3">
           <div class="rounded-2xl border-2 border-ink bg-white p-4 shadow-brutal-sm card-animate" reveal data-animate>
             <p class="text-xs font-bold uppercase tracking-widest text-slate-500">Indikator</p>
-            <p class="font-display text-3xl">14</p>
+            <p class="font-display text-3xl">13</p>
             <p class="text-xs text-slate-600">Input lengkap untuk akurasi.</p>
           </div>
           <div class="rounded-2xl border-2 border-ink bg-white p-4 shadow-brutal-sm card-animate" reveal data-animate>
@@ -246,39 +246,17 @@
             data-animate>
             <div class="flex items-center justify-between gap-2">
               <h3 class="font-display text-xl">Metrik Psikologis</h3>
-              <span class="text-xs font-bold uppercase tracking-widest text-slate-500">4 indikator</span>
+              <span class="text-xs font-bold uppercase tracking-widest text-slate-500">2 indikator</span>
             </div>
             <div class="mt-4 grid gap-4 md:grid-cols-2">
               <label class="space-y-2">
-                <span class="text-sm font-semibold">Skor Stres</span>
-                <div class="flex items-center justify-between text-xs text-slate-600">
-                  <span>0 - 100</span>
-                  <span class="rounded-full border-2 border-ink bg-sun px-3 py-1 font-bold"
-                    data-for="stress_score">50</span>
-                </div>
-                <input type="range" id="stress_score" name="stress_score" min="0" max="100" value="50" class="w-full"
-                  required>
-                <p class="text-xs text-slate-500">Seberapa berat beban pikiran yang kamu rasakan akhir-akhir ini?</p>
-              </label>
-              <label class="space-y-2">
-                <span class="text-sm font-semibold">Skor Kecemasan</span>
-                <div class="flex items-center justify-between text-xs text-slate-600">
-                  <span>0 - 100</span>
-                  <span class="rounded-full border-2 border-ink bg-sun px-3 py-1 font-bold"
-                    data-for="anxiety_score">50</span>
-                </div>
-                <input type="range" id="anxiety_score" name="anxiety_score" min="0" max="100" value="50" class="w-full"
-                  required>
-                <p class="text-xs text-slate-500">Seberapa sering kamu merasa gugup, cemas, atau khawatir dalam sehari-hari?</p>
-              </label>
-              <label class="space-y-2">
                 <span class="text-sm font-semibold">Apresiasi Diri</span>
                 <div class="flex items-center justify-between text-xs text-slate-600">
-                  <span>0 - 100</span>
-                  <span class="rounded-full border-2 border-ink bg-sun px-3 py-1 font-bold"
-                    data-for="reward_score">50</span>
-                </div>
-                <input type="range" id="reward_score" name="reward_score" min="0" max="100" value="50" class="w-full"
+              <span>0 - 10</span>
+              <span class="rounded-full border-2 border-ink bg-sun px-3 py-1 font-bold"
+                data-for="reward_score">5</span>
+            </div>
+            <input type="range" id="reward_score" name="reward_score" min="0" max="10" step="0.5" value="5" class="w-full"
                   required>
                 <p class="text-xs text-slate-500">Seberapa puas kamu dengan hasil atau pencapaianmu akhir-akhir ini?</p>
               </label>
@@ -293,10 +271,9 @@
                   <ul class="dropdown-menu" role="listbox">
                     <li><button type="button" class="dropdown-option is-selected" data-value="Neutral">Netral</button>
                     </li>
-                    <li><button type="button" class="dropdown-option" data-value="Happy">Senang</button></li>
-                    <li><button type="button" class="dropdown-option" data-value="Sad">Sedih</button></li>
-                    <li><button type="button" class="dropdown-option" data-value="Anxious">Cemas</button></li>
-                    <li><button type="button" class="dropdown-option" data-value="Excited">Bersemangat</button></li>
+                    <li><button type="button" class="dropdown-option" data-value="Calm">Tenang</button></li>
+                    <li><button type="button" class="dropdown-option" data-value="Tense">Tegang</button></li>
+                    <li><button type="button" class="dropdown-option" data-value="Fatigued">Kelelahan</button></li>
                   </ul>
                 </div>
                 <p class="text-xs text-slate-500">Pilih suasana hati yang paling menggambarkan dirimu saat ini.</p>
@@ -410,21 +387,15 @@
                 <p class="text-xs text-slate-500">Ekspresi wajah yang paling sering kamu tunjukkan hari ini.</p>
               </label>
               <label class="space-y-2">
-                <span class="text-sm font-semibold">Efek Bantuan/Saran</span>
-                <div class="dropdown" data-name="intervention_response" data-value="Positive">
-                  <input type="hidden" id="intervention_response" name="intervention_response" value="Positive">
-                  <button type="button" class="dropdown-trigger">
-                    <span class="dropdown-label">Positif</span>
-                    <span class="dropdown-caret" aria-hidden="true">▾</span>
-                  </button>
-                  <ul class="dropdown-menu" role="listbox">
-                    <li><button type="button" class="dropdown-option is-selected" data-value="Positive">Positif</button>
-                    </li>
-                    <li><button type="button" class="dropdown-option" data-value="Neutral">Netral</button></li>
-                    <li><button type="button" class="dropdown-option" data-value="Negative">Negatif</button></li>
-                  </ul>
+                <span class="text-sm font-semibold">Konsumsi Kafein</span>
+                <div class="flex items-center justify-between text-xs text-slate-600">
+                  <span>0 - 10</span>
+                  <span class="rounded-full border-2 border-ink bg-sun px-3 py-1 font-bold"
+                    data-for="caffeine_intake">3</span>
                 </div>
-                <p class="text-xs text-slate-500">Bagaimana pengaruh tips, saran, atau bantuan yang kamu terima sebelumnya terhadap kondisimu?</p>
+                <input type="range" id="caffeine_intake" name="caffeine_intake" min="0" max="10" step="0.5" value="3" class="w-full"
+                  required>
+                <p class="text-xs text-slate-500">Tingkat konsumsi kafein harian (0=tidak sama sekali, 10=sangat tinggi)</p>
               </label>
             </div>
           </div>
@@ -484,7 +455,7 @@
             </div>
 
             <div class="rounded-2xl border-2 border-ink bg-emerald-50 p-4">
-              <p class="text-xs font-bold uppercase tracking-widest text-emerald-700">Saran Intervensi</p>
+              <p class="text-xs font-bold uppercase tracking-widest text-emerald-700">Rekomendasi Intervensi</p>
               <p id="recommendation" class="mt-1 text-lg font-semibold text-emerald-900">--</p>
             </div>
 
@@ -548,7 +519,7 @@
 
                 <p class="mt-2"><strong>Informasi di setiap kotak:</strong></p>
                 <ul class="list-disc list-inside space-y-1 ml-2">
-                  <li><strong>Kondisi (contoh: "Stress_Score <= 50.00"):</strong> Pertanyaan yang diajukan</li>
+                  <li><strong>Kondisi (contoh: "Exam_Pressure <= 5.00"):</strong> Pertanyaan yang diajukan</li>
                   <li><strong>Warna:</strong> Menunjukkan kelas mana yang paling dominan (semakin gelap = semakin yakin)</li>
                   <li><strong>Angka di bawah:</strong> Jumlah data training yang masuk ke node ini</li>
                   <li><strong>Persentase:</strong> Distribusi kelas di node ini (contoh: [30%, 50%, 20%])</li>
@@ -577,7 +548,7 @@
             </ul>
             <p class="mt-3 text-sm font-semibold text-blue-900">Isi dan arti elemen di decision tree</p>
             <ul class="mt-2 list-disc list-inside space-y-1 text-xs text-blue-800">
-              <li>Kondisi: aturan split, misalnya "Stress_Score &lt;= 50".</li>
+              <li>Kondisi: aturan split, misalnya "Exam_Pressure &lt;= 7.50".</li>
               <li>Samples: jumlah data training yang masuk ke node tersebut.</li>
               <li>Value: distribusi kelas pada node (untuk menghitung probabilitas).</li>
               <li>Class: kelas dominan di node (hasil prediksi jika leaf).</li>
@@ -701,18 +672,20 @@
     <section class="mt-14 rounded-3xl border-2 border-ink bg-white p-6 shadow-brutal section-animate"
       aria-labelledby="datasetTitle" reveal data-animate>
       <div class="space-y-6">
-        <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div class="flex flex-col gap-4">
           <div>
             <p class="text-xs font-bold uppercase tracking-widest text-slate-500">Dataset</p>
             <h2 id="datasetTitle" class="font-display text-3xl">Preview Dataset</h2>
             <p class="mt-2 text-sm text-slate-600">Cek sampel data training dan validasi input.</p>
+            <p id="datasetSummary" class="mt-1 text-sm text-slate-600">Memuat preview dataset...</p>
           </div>
-          <button id="openDatasetModalSecondary"
-            class="rounded-full border-2 border-ink bg-white px-6 py-3 text-xs font-bold uppercase tracking-widest shadow-brutal-sm transition hover:-translate-y-0.5">
-            Buka Preview
-          </button>
+          <div class="flex justify-end">
+            <button id="openDatasetModalSecondary"
+              class="rounded-full border-2 border-ink bg-white px-6 py-3 text-xs font-bold uppercase tracking-widest shadow-brutal-sm transition hover:-translate-y-0.5">
+              Buka Preview
+            </button>
+          </div>
         </div>
-        <p id="datasetSummary" class="text-sm text-slate-600">Memuat preview dataset...</p>
       </div>
     </section>
   </div>
@@ -774,7 +747,7 @@
           </div>
           <div id="decisionTreeInfo" class="hidden rounded-xl border-2 border-green-200 bg-green-50 p-3 mb-3 text-xs text-green-800">
             <p><strong>Apa itu Decision Tree?</strong></p>
-            <p class="mt-2">Decision Tree adalah model machine learning yang membuat keputusan dengan cara mirip seperti diagram alur. Model ini mengajukan pertanyaan beruntun tentang data Anda (contoh: "Apakah stress score > 50?") dan berdasarkan jawaban, model akan terus menggali lebih dalam hingga mencapai kesimpulan akhir.</p>
+            <p class="mt-2">Decision Tree adalah model machine learning yang membuat keputusan dengan cara mirip seperti diagram alur. Model ini mengajukan pertanyaan beruntun tentang data Anda (contoh: "Apakah Exam_Pressure > 7.50?") dan berdasarkan jawaban, model akan terus menggali lebih dalam hingga mencapai kesimpulan akhir.</p>
 
             <p class="mt-2"><strong>Bagaimana cara kerjanya?</strong></p>
             <ul class="list-disc list-inside mt-2 space-y-1">

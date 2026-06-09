@@ -27,8 +27,6 @@ DATASET_CANDIDATES = ["dataset.csv", "psychological_regulation_dataset.csv"]
 DATASET_PREVIEW_ROWS = 20
 
 REQUIRED_FIELDS = {
-    "stress_score": (0, 100),
-    "anxiety_score": (0, 100),
     "exam_pressure": (0, 10),
     "sleep_hours": (0, 24),
     "social_support": (0, 10),
@@ -38,10 +36,10 @@ REQUIRED_FIELDS = {
     "study_hours": (0, 24),
     "attendance": (0, 100),
     "screen_time": (0, 24),
-    "facial_emotion": None,
-    "mood_state": None,
-    "intervention_response": None,
-    "reward_score": (0, 100),
+    "caffeine_intake": (0, 10),
+    "facial_emotion": ["Neutral", "Happy", "Sad", "Angry", "Surprised"],
+    "mood_state": ["Calm", "Neutral", "Tense", "Fatigued"],
+    "reward_score": (0, 10),
 }
 
 
@@ -81,9 +79,9 @@ def _validate_payload(payload: Dict[str, Any]) -> Tuple[bool, str]:
 
     for field, limits in REQUIRED_FIELDS.items():
         value = payload.get(field)
-        if limits is None:
-            if not isinstance(value, str) or not value.strip():
-                return False, f"{field} must be a non-empty string"
+        if isinstance(limits, list):
+            if value not in limits:
+                return False, f"{field} must be one of: {', '.join(limits)}"
             continue
 
         if not isinstance(value, (int, float)):
@@ -143,6 +141,14 @@ def tree() -> Any:
         return jsonify({"success": False, "error": "Model is not loaded"}), 500
     trees = PREDICTOR.get_tree_dots()
     return jsonify({"success": True, "trees": trees})
+
+
+@app.route("/feature-importance", methods=["GET"])
+def feature_importance() -> Any:
+    if not PREDICTOR.is_ready:
+        return jsonify({"success": False, "error": "Model is not loaded"}), 500
+    importances = PREDICTOR.get_feature_importances()
+    return jsonify({"success": True, "feature_importances": importances})
 
 
 @app.route("/dataset-preview", methods=["GET"])
